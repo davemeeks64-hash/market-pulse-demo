@@ -14,16 +14,19 @@ interface StockData {
 }
 
 export default function Home() {
-  // Watchlist: Load from localStorage or default
-  const [watchlist, setWatchlist] = useState<string[]>(() => {
-    const saved = localStorage.getItem("microtrade-watchlist");
-    return saved ? JSON.parse(saved) : ["AAPL", "TSLA", "NVDA"];
-  });
-
+  const [watchlist, setWatchlist] = useState<string[]>(["AAPL", "TSLA", "NVDA"]);
   const [data, setData] = useState<Record<string, StockData>>({});
   const [input, setInput] = useState("");
   const [dark, setDark] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  // Load watchlist from localStorage ONLY on client
+  useEffect(() => {
+    const saved = localStorage.getItem("microtrade-watchlist");
+    if (saved) {
+      setWatchlist(JSON.parse(saved));
+    }
+  }, []);
 
   // Save watchlist to localStorage
   useEffect(() => {

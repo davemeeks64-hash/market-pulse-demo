@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, PanInfo } from "framer-motion";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
@@ -20,6 +20,12 @@ const initialStocks: Stock[] = [
 
 export default function Home() {
   const [watchlist, setWatchlist] = useState<Stock[]>(initialStocks);
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleSwipe = (symbol: string) => (event: any, info: PanInfo) => {
     if (info.offset.x < -100) {
@@ -32,7 +38,10 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-black text-white p-4">
       <div className="max-w-md mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-6">Market Pulse</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">MicroTrade</h1>
+          <p className="text-xs opacity-70">{time.toLocaleTimeString()}</p>
+        </div>
 
         <div className="space-y-4">
           {watchlist.map((stock) => {
@@ -68,7 +77,6 @@ export default function Home() {
           })}
         </div>
 
-        {/* News Ticker */}
         <div className="fixed bottom-0 left-0 right-0 bg-gray-900 p-2 overflow-hidden">
           <motion.div
             animate={{ x: [0, -1000] }}

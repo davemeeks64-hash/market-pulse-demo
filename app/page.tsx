@@ -1,3 +1,4 @@
+cat > app/page.tsx << 'EOF'
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,7 +20,9 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [dark, setDark] = useState(false);
 
-  const fetchStock = async (symbol: string): Promise<StockData | null> => onst res = await fetch(API_URL + symbol);
+  const fetchStock = async (symbol: string): Promise<StockData | null> => {
+    try {
+      const res = await fetch(API_URL + symbol);
       const json = await res.json();
       const q = json["Global Quote"];
       if (!q) return null;
@@ -130,3 +133,4 @@ export default function Home() {
     </main>
   );
 }
+EOF

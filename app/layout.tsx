@@ -1,14 +1,11 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-<link rel="manifest" href="/manifest.json" />
-<link rel="icon" href="/icon-192.png" />
-
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Market Pulse",
-  description: "Real-time market insights",
+  title: "MicroTrade 5.0",
+  description: "Real-time stock dashboard",
 };
 
 export default function RootLayout({
@@ -18,6 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/icon-192.png" />
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );

@@ -39,7 +39,13 @@ export default function Home() {
     <main className="min-h-screen bg-black text-white p-4">
       <div className="max-w-md mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">MicroTrade</h1>
+          <div className="flex items-center gap-3 mb-6">
+  <div className="relative">
+    <img src="/microtrade-logo.png" alt="MicroTrade" className="w-12 h-12" />
+    <span className="absolute -top-1 -right-1 text-xs font-bold bg-green-500 text-black px-1.5 py-0.5 rounded-full">5.0</span>
+  </div>
+  <span className="text-3xl font-bold">MicroTrade</span>
+</div>
           <p className="text-xs opacity-70">{time.toLocaleTimeString()}</p>
         </div>
 

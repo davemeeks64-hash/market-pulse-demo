@@ -24,49 +24,49 @@ export default function Home() {
   const handleSwipe = (symbol: string) => (event: any, info: PanInfo) => {
     if (info.offset.x < -100) {
       setWatchlist(prev => prev.filter(s => s.symbol !== symbol));
-      alert(`Removed ${symbol}`);
     } else if (info.offset.x > 100) {
-      alert(`Alert set for ${symbol}!`);
+      alert(`Alert set for ${symbol}`);
     }
   };
 
   return (
-    <main className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-4xl font-bold text-center mb-8">MicroTrade 5.0</h1>
-      <div className="space-y-6 max-w-lg mx-auto">
-        {watchlist.map((stock) => {
-          const isUp = stock.changePct > 0;
-          return (
-            <motion.div
-              key={stock.symbol}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              onDragEnd={handleSwipe(stock.symbol)}
-              whileDrag={{ scale: 1.02 }}
-              className={`bg-gray-900 rounded-xl p-5 border ${
-                isUp ? "border-green-500/30" : "border-red-500/30"
-              } shadow-lg cursor-grab active:cursor-grabbing`}
-            >
-              <div className="flex justify-between items-center mb-3">
-                <p className="text-xl font-bold">{stock.symbol}</p>
-                <p className={`text-lg font-medium ${isUp ? "text-green-400" : "text-red-400"}`}>
-                  {isUp ? "+" : ""}{stock.changePct.toFixed(2)}%
-                </p>
-              </div>
-              <p className="text-3xl font-mono font-bold">${stock.price.toFixed(2)}</p>
-              <div className="h-16 mt-3">
-                <ResponsiveContainer>
-                  <LineChart data={stock.sparkline.map(p => ({ p }))}>
-                    <Line type="monotone" dataKey="p" stroke={isUp ? "#10b981" : "#ef4444"} strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-xs text-center mt-3 opacity-60">
-                ← Swipe to Remove • Swipe → to Alert
-              </p>
-            </motion.div>
-          );
-        })}
+    <main className="min-h-screen bg-black text-white p-4">
+      <div className="max-w-md mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-6">MicroTrade</h1>
+
+        <div className="space-y-4">
+          {watchlist.map((stock) => {
+            const isUp = stock.changePct > 0;
+            return (
+              <motion.div
+                key={stock.symbol}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragEnd={handleSwipe(stock.symbol)}
+                whileDrag={{ scale: 1.02 }}
+                className="bg-gray-900 rounded-lg p-3 border border-gray-800 shadow-sm cursor-grab active:cursor-grabbing"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-lg font-bold">{stock.symbol}</p>
+                    <p className="text-xl font-mono">${stock.price.toFixed(2)}</p>
+                  </div>
+                  <p className={`text-sm font-medium ${isUp ? "text-green-400" : "text-red-400"}`}>
+                    {isUp ? "+" : ""}{stock.changePct.toFixed(2)}%
+                  </p>
+                </div>
+
+                <div className="h-10 mt-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={stock.sparkline.map(p => ({ p }))}>
+                      <Line type="monotone" dataKey="p" stroke={isUp ? "#10b981" : "#ef4444"} strokeWidth={1.5} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </main>
   );

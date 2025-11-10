@@ -14,13 +14,21 @@ interface StockData {
 }
 
 export default function Home() {
+  // Watchlist: Load from localStorage or default
   const [watchlist, setWatchlist] = useState<string[]>(() => {
-  const saved = localStorage.getItem("microtrade-watchlist");
-  return saved ? JSON.parse(saved) : ["AAPL", "TSLA", "NVDA"];
-});
+    const saved = localStorage.getItem("microtrade-watchlist");
+    return saved ? JSON.parse(saved) : ["AAPL", "TSLA", "NVDA"];
+  });
+
   const [data, setData] = useState<Record<string, StockData>>({});
   const [input, setInput] = useState("");
   const [dark, setDark] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  // Save watchlist to localStorage
+  useEffect(() => {
+    localStorage.setItem("microtrade-watchlist", JSON.stringify(watchlist));
+  }, [watchlist]);
 
   const fetchStock = async (symbol: string): Promise<StockData | null> => {
     try {
@@ -51,10 +59,8 @@ export default function Home() {
         const stock = await fetchStock(s);
         if (stock) results[s] = stock;
       }
-  useEffect(() => {
-  localStorage.setItem("microtrade-watchlist", JSON.stringify(watchlist));
-},[watchlist]);
-setData(results);
+      setData(results);
+      setLastUpdate(new Date());
     };
     load();
     const interval = setInterval(load, 30000);
@@ -72,7 +78,14 @@ setData(results);
   return (
     <main className={`min-h-screen p-6 transition-all duration-300 ${dark ? "bg-gray-900 text-white" : "bg-gradient-to-br from-blue-950 to-black text-white"}`}>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-5xl md:text-6xl font-bold">MicroTrade 5.0</h1>
+        <div>
+          <h1 className="text-5xl md:text-6xl font-bold">MicroTrade 5.0</h1>
+          {lastUpdate && (
+            <p className="text-xs opacity-70 mt-1">
+              Updated: {lastUpdate.toLocaleTimeString()}
+            </p>
+          )}
+        </div>
         <button onClick={() => setDark(!dark)} className="p-3 rounded-full bg-gray-800 hover:bg-gray-700 transition">
           {dark ? <Sun size={24} /> : <Moon size={24} />}
         </button>

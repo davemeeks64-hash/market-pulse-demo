@@ -35,21 +35,20 @@ export default function Home() {
     }
   };
 
-  return (
-    <main className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-md mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-3 mb-6">
-  <div className="relative">
-    <img src="/microtrade-logo.png" alt="MicroTrade" className="w-12 h-12" />
-    <span className="absolute -top-1 -right-1 text-xs font-bold bg-green-500 text-black px-1.5 py-0.5 rounded-full">5.0</span>
+ <div className="max-w-md mx-auto">
+  <div className="flex items-center gap-3 mb-6">
+    <div className="relative">
+      <img 
+  src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QA/wD/AP+gvaeTAAAAB3RJTUUH5wMVEj0J1m9K8gAAAAxpVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAABgklEQVR42u3dQY6CMBBF0b1Jq5J2pZ1K2pV2K2lX0q6kXUm7knYl7UraFbfT3fP9fD7f9/39/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/5n5/2Q=="
+  alt="MicroTrade"
+  className="w-12 h-12"
+/>
+      <span className="absolute -top-1 -right-1 text-xs font-bold bg-green-500 text-black px-1.5 py-0.5 rounded-full">5.0</span>
+    </div>
+    <span className="text-3xl font-bold">MicroTrade</span>
   </div>
-  <span className="text-3xl font-bold">MicroTrade</span>
-</div>
-          <p className="text-xs opacity-70">{time.toLocaleTimeString()}</p>
-        </div>
 
-        <div className="space-y-4">
+  <div className="space-y-4">
           {watchlist.map((stock) => {
             const isUp = stock.changePct > 0;
             return (

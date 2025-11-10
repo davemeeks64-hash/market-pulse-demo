@@ -10,4 +10,9 @@
 
 .animate-blob { animation: blob 8s infinite; }
 .animation-delay-2000 { animation-delay: 2s; }
-.animation-delay-4000 { animation-delay: 4s; }
+.animation-delay-4000 { animation-delay: 4s; }html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}

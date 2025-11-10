@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, PanInfo } from "framer-motion";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
@@ -42,6 +42,7 @@ export default function Home() {
           <span className="text-sm font-medium text-green-500">5.0</span>
         </div>
 
+        <div className="space-y-4">
           {watchlist.map((stock) => {
             const isUp = stock.changePct > 0;
             return (

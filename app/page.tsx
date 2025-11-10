@@ -71,12 +71,16 @@ export default function Home() {
         </div>
 
         {/* News Ticker */}
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 p-2">
-          <marquee className="text-xs text-green-400">
-            AAPL: Apple AI chip launch | TSLA: Musk Mars tweet | NVDA: AI boom continues | BTC: $70k breakout
-          </marquee>
-        </div>
-      </div>
+<div className="fixed bottom-0 left-0 right-0 bg-gray-900 p-2 overflow-hidden">
+  <motion.div
+    animate={{ x: [0, -1000] }}
+    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+    className="text-xs text-green-400 whitespace-nowrap"
+  >
+    AAPL: Apple AI chip launch | TSLA: Musk Mars tweet | NVDA: AI boom continues | BTC: $70k breakout | 
+    AAPL: Apple AI chip launch | TSLA: Musk Mars tweet | NVDA: AI boom continues | BTC: $70k breakout
+  </motion.div>
+</div>
     </main>
   );
 }

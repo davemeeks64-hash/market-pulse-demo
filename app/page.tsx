@@ -14,7 +14,10 @@ interface StockData {
 }
 
 export default function Home() {
-  const [watchlist, setWatchlist] = useState<string[]>(["AAPL", "TSLA", "NVDA"]);
+  const [watchlist, setWatchlist] = useState<string[]>(() => {
+  const saved = localStorage.getItem("microtrade-watchlist");
+  return saved ? JSON.parse(saved) : ["AAPL", "TSLA", "NVDA"];
+});
   const [data, setData] = useState<Record<string, StockData>>({});
   const [input, setInput] = useState("");
   const [dark, setDark] = useState(false);
@@ -48,7 +51,10 @@ export default function Home() {
         const stock = await fetchStock(s);
         if (stock) results[s] = stock;
       }
-      setData(results);
+  useEffect(() => {
+  localStorage.setItem("microtrade-watchlist", JSON.stringify(watchlist));
+},[watchlist]);
+setData(results);
     };
     load();
     const interval = setInterval(load, 30000);

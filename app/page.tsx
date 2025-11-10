@@ -1,160 +1,123 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Sun, Moon, Plus, Trash2, TrendingUp, TrendingDown } from "lucide-react";
+import { useState } from "react";
+import { motion, PanInfo } from "framer-motion";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
-const API_URL = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&apikey=demo&symbol=";
-
-interface StockData {
+interface Stock {
+  symbol: string;
+  name: string;
   price: number;
   change: number;
   changePct: number;
-  history: { time: number; price: number }[];
+  volume: string;
+  sparkline: number[];
+  watching: number;
 }
 
+const initialStocks: Stock[] = [
+  {
+    symbol: "AAPL",
+    name: "Apple Inc.",
+    price: 227.48,
+    change: 2.15,
+    changePct: 0.96,
+    volume: "45.2M",
+    watching: 3200,
+    sparkline: [220, 222, 221, 225, 227, 226, 227.48],
+  },
+  {
+    symbol: "TSLA",
+    name: "Tesla Inc.",
+    price: 248.91,
+    change: -5.23,
+    changePct: -2.06,
+    volume: "89.1M",
+    watching: 5100,
+    sparkline: [250, 252, 251, 249, 248, 248.5, 248.91],
+  },
+  {
+    symbol: "NVDA",
+    name: "NVIDIA Corp",
+    price: 135.67,
+    change: 4.89,
+    changePct: 3.74,
+    volume: "67.3M",
+    watching: 2800,
+    sparkline: [130, 131, 132, 133, 134, 135, 135.67],
+  },
+];
+
 export default function Home() {
-  const [watchlist, setWatchlist] = useState<string[]>(["AAPL", "TSLA", "NVDA"]);
-  const [data, setData] = useState<Record<string, StockData>>({});
-  const [input, setInput] = useState("");
-  const [dark, setDark] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [watchlist, setWatchlist] = useState<Stock[]>(initialStocks);
 
-  // Load watchlist from localStorage ONLY on client
-  useEffect(() => {
-    const saved = localStorage.getItem("microtrade-watchlist");
-    if (saved) {
-      setWatchlist(JSON.parse(saved));
-    }
-  }, []);
-
-  // Save watchlist to localStorage
-  useEffect(() => {
-    localStorage.setItem("microtrade-watchlist", JSON.stringify(watchlist));
-  }, [watchlist]);
-
-  const fetchStock = async (symbol: string): Promise<StockData | null> => {
-    try {
-      const res = await fetch(API_URL + symbol);
-      const json = await res.json();
-      const q = json["Global Quote"];
-      if (!q) return null;
-
-      const price = parseFloat(q["05. price"]);
-      const change = parseFloat(q["09. change"]);
-      const changePct = parseFloat(q["10. change percent"]);
-
-      const history = Array.from({ length: 20 }, (_, i) => ({
-        time: i,
-        price: price * (1 + (Math.random() - 0.5) * 0.03),
-      }));
-
-      return { price, change, changePct, history };
-    } catch {
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    const load = async () => {
-      const results: Record<string, StockData> = {};
-      for (const s of watchlist) {
-        const stock = await fetchStock(s);
-        if (stock) results[s] = stock;
+  const handleSwipe = (symbol: string) => (event: any, info: PanInfo) => {
+    const { offset } = info;
+    if (Math.abs(offset.x) > 100) {
+      if (offset.x < 0) {
+        // Swipe left → Remove
+        setWatchlist(prev => prev.filter(s => s.symbol !== symbol));
+        console.log("Removed:", symbol);
+      } else {
+        // Swipe right → Alert
+        alert(`Alert set for ${symbol}!`);
+        console.log("Alert:", symbol);
       }
-      setData(results);
-      setLastUpdate(new Date());
-    };
-    load();
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
-  }, [watchlist]);
-
-  const add = () => {
-    const s = input.trim().toUpperCase();
-    if (s && !watchlist.includes(s)) {
-      setWatchlist([...watchlist, s]);
-      setInput("");
     }
   };
 
   return (
-    <main className={`min-h-screen p-6 transition-all duration-300 ${dark ? "bg-gray-900 text-white" : "bg-gradient-to-br from-blue-950 to-black text-white"}`}>
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-5xl md:text-6xl font-bold">MicroTrade 5.0</h1>
-          {lastUpdate && (
-            <p className="text-xs opacity-70 mt-1">
-              Updated: {lastUpdate.toLocaleTimeString()}
-            </p>
-          )}
-        </div>
-        <button onClick={() => setDark(!dark)} className="p-3 rounded-full bg-gray-800 hover:bg-gray-700 transition">
-          {dark ? <Sun size={24} /> : <Moon size={24} />}
-        </button>
-      </div>
-      {typeof window !== "undefined" && "BeforeInstallPromptEvent" in window && (
-        <button
-          onClick={() => window.dispatchEvent(new Event("beforeinstallprompt"))}
-          className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm transition"
-        >
-          Install App
-        </button>
-      )}
-      <div className="flex gap-2 mb-8 max-w-md">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value.toUpperCase())}
-          onKeyDown={(e) => e.key === "Enter" && add()}
-          placeholder="Add symbol..."
-          className="flex-1 p-3 bg-gray-800 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-        <button onClick={add} className="p-3 bg-green-600 hover:bg-green-500 rounded-lg transition">
-          <Plus size={24} />
-        </button>
-      </div>
+    <main className="min-h-screen bg-gradient-to-br from-black to-slate-900 text-white p-6">
+      <h1 className="text-4xl md:text-5xl font-bold text-center mb-8">MicroTrade 5.0</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {watchlist.map((sym) => {
-          const s = data[sym];
-          const up = s?.changePct ? s.changePct > 0 : false;
+      <div className="space-y-6 max-w-2xl mx-auto">
+        {watchlist.map((stock) => {
+          const isUp = stock.changePct > 0;
           return (
-            <div
-              key={sym}
-              className={`p-6 rounded-xl border-2 transition-all ${
-                up ? "bg-green-900/30 border-green-500" : "bg-red-900/30 border-red-500"
-              } backdrop-blur-sm shadow-lg`}
+            <motion.div
+              key={stock.symbol}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onDragEnd={handleSwipe(stock.symbol)}
+              whileDrag={{ scale: 1.02 }}
+              className={`bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border ${
+                isUp ? "border-green-500/30" : "border-red-500/30"
+              } shadow-lg cursor-grab active:cursor-grabbing`}
             >
               <div className="flex justify-between items-start mb-3">
-                <h2 className="text-2xl font-bold">{sym}</h2>
-                <button
-                  onClick={() => setWatchlist(watchlist.filter((x) => x !== sym))}
-                  className="text-red-400 hover:text-red-300 transition"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div>
+                  <p className="text-lg font-bold">{stock.symbol}</p>
+                  <p className="text-sm opacity-70">{stock.name}</p>
+                </div>
+                <p className="text-xs text-orange-400">3.2k watching</p>
               </div>
-              {!s ? (
-                <p className="text-gray-400 animate-pulse">Loading...</p>
-              ) : (
-                <>
-                  <p className="text-3xl font-mono mb-2">${s.price.toFixed(2)}</p>
-                  <div className="flex items-center gap-1 mb-3">
-                    {up ? <TrendingUp size={16} className="text-green-400" /> : <TrendingDown size={16} className="text-red-400" />}
-                    <span className={up ? "text-green-400" : "text-red-400"}>
-                      {up ? "+" : ""}{s.change.toFixed(2)} ({up ? "+" : ""}{s.changePct.toFixed(2)}%)
-                    </span>
-                  </div>
-                  <div className="h-16">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={s.history}>
-                        <Line type="monotone" dataKey="price" stroke={up ? "#10b981" : "#ef4444"} strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </>
-              )}
-            </div>
+
+              <div className="flex justify-between items-end">
+                <div>
+                  <p className="text-3xl font-mono font-bold">${stock.price.toFixed(2)}</p>
+                  <p className={`text-lg font-medium ${isUp ? "text-green-400" : "text-red-400"}`}>
+                    {isUp ? "+" : ""}{stock.change.toFixed(2)} ({isUp ? "+" : ""}{stock.changePct.toFixed(2)}%)
+                  </p>
+                </div>
+                <div className="w-32 h-16">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={stock.sparkline.map(p => ({ p }))}>
+                      <Line
+                        type="monotone"
+                        dataKey="p"
+                        stroke={isUp ? "#10b981" : "#ef4444"}
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <p className="text-xs text-center mt-3 opacity-60">
+                ← Swipe to Remove • Swipe → to Alert
+              </p>
+            </motion.div>
           );
         })}
       </div>

@@ -71,7 +71,14 @@ export default function Home() {
           {dark ? <Sun size={24} /> : <Moon size={24} />}
         </button>
       </div>
-
+      {typeof window !== "undefined" && "BeforeInstallPromptEvent" in window && (
+        <button
+          onClick={() => window.dispatchEvent(new Event("beforeinstallprompt"))}
+          className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm transition"
+        >
+          Install App
+        </button>
+      )}
       <div className="flex gap-2 mb-8 max-w-md">
         <input
           value={input}

@@ -9,15 +9,13 @@ interface Stock {
   price: number;
   change: number;
   changePct: number;
-  volume: string;
-  marketCap: string;
   sparkline: number[];
 }
 
 const initialStocks: Stock[] = [
-  { symbol: "AAPL", price: 227.48, change: 2.15, changePct: 0.96, volume: "45.2M", marketCap: "$3.5T", sparkline: [220, 222, 225, 227, 226, 227.48] },
-  { symbol: "TSLA", price: 248.91, change: -5.23, changePct: -2.06, volume: "89.1M", marketCap: "$790B", sparkline: [250, 252, 249, 248, 248.5, 248.91] },
-  { symbol: "NVDA", price: 135.67, change: 4.89, changePct: 3.74, volume: "67.3M", marketCap: "$3.3T", sparkline: [130, 132, 134, 135, 135, 135.67] },
+  { symbol: "AAPL", price: 227.48, change: 2.15, changePct: 0.96, sparkline: [220, 222, 225, 227, 226, 227.48] },
+  { symbol: "TSLA", price: 248.91, change: -5.23, changePct: -2.06, sparkline: [250, 252, 249, 248, 248.5, 248.91] },
+  { symbol: "NVDA", price: 135.67, change: 4.89, changePct: 3.74, sparkline: [130, 132, 134, 135, 135, 135.67] },
 ];
 
 export default function Home() {
@@ -57,6 +55,7 @@ export default function Home() {
                     {isUp ? "+" : ""}{stock.changePct.toFixed(2)}%
                   </p>
                 </div>
+
                 <div className="h-10 mt-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={stock.sparkline.map(p => ({ p }))}>
@@ -64,23 +63,23 @@ export default function Home() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Vol: {stock.volume} • Cap: {stock.marketCap}</p>
               </motion.div>
             );
           })}
         </div>
 
         {/* News Ticker */}
-<div className="fixed bottom-0 left-0 right-0 bg-gray-900 p-2 overflow-hidden">
-  <motion.div
-    animate={{ x: [0, -1000] }}
-    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-    className="text-xs text-green-400 whitespace-nowrap"
-  >
-    AAPL: Apple AI chip launch | TSLA: Musk Mars tweet | NVDA: AI boom continues | BTC: $70k breakout | 
-    AAPL: Apple AI chip launch | TSLA: Musk Mars tweet | NVDA: AI boom continues | BTC: $70k breakout
-  </motion.div>
-</div>
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 p-2 overflow-hidden">
+          <motion.div
+            animate={{ x: [0, -1000] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="text-xs text-green-400 whitespace-nowrap"
+          >
+            AAPL: Apple AI chip launch | TSLA: Musk Mars tweet | NVDA: AI boom continues | BTC: $70k breakout | 
+            AAPL: Apple AI chip launch | TSLA: Musk Mars tweet | NVDA: AI boom continues | BTC: $70k breakout
+          </motion.div>
+        </div>
+      </div>
     </main>
   );
 }

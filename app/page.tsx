@@ -1,4 +1,3 @@
-cat > app/page.tsx << 'EOF'
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,9 +19,7 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [dark, setDark] = useState(false);
 
-  const fetchStock = async (symbol: string): Promise<StockData | null> => {
-    try {
-      const res = await fetch(API_URL + symbol);
+  const fetchStock = async (symbol: string): Promise<StockData | null> => onst res = await fetch(API_URL + symbol);
       const json = await res.json();
       const q = json["Global Quote"];
       if (!q) return null;
@@ -76,3 +73,60 @@ export default function Home() {
       <div className="flex gap-2 mb-8 max-w-md">
         <input
           value={input}
+          onChange={(e) => setInput(e.target.value.toUpperCase())}
+          onKeyDown={(e) => e.key === "Enter" && add()}
+          placeholder="Add symbol..."
+          className="flex-1 p-3 bg-gray-800 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+        <button onClick={add} className="p-3 bg-green-600 hover:bg-green-500 rounded-lg transition">
+          <Plus size={24} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {watchlist.map((sym) => {
+          const s = data[sym];
+          const up = s?.changePct ? s.changePct > 0 : false;
+          return (
+            <div
+              key={sym}
+              className={`p-6 rounded-xl border-2 transition-all ${
+                up ? "bg-green-900/30 border-green-500" : "bg-red-900/30 border-red-500"
+              } backdrop-blur-sm shadow-lg`}
+            >
+              <div className="flex justify-between items-start mb-3">
+                <h2 className="text-2xl font-bold">{sym}</h2>
+                <button
+                  onClick={() => setWatchlist(watchlist.filter((x) => x !== sym))}
+                  className="text-red-400 hover:text-red-300 transition"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+              {!s ? (
+                <p className="text-gray-400 animate-pulse">Loading...</p>
+              ) : (
+                <>
+                  <p className="text-3xl font-mono mb-2">${s.price.toFixed(2)}</p>
+                  <div className="flex items-center gap-1 mb-3">
+                    {up ? <TrendingUp size={16} className="text-green-400" /> : <TrendingDown size={16} className="text-red-400" />}
+                    <span className={up ? "text-green-400" : "text-red-400"}>
+                      {up ? "+" : ""}{s.change.toFixed(2)} ({up ? "+" : ""}{s.changePct.toFixed(2)}%)
+                    </span>
+                  </div>
+                  <div className="h-16">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={s.history}>
+                        <Line type="monotone" dataKey="price" stroke={up ? "#10b981" : "#ef4444"} strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </main>
+  );
+}

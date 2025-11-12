@@ -1,64 +1,78 @@
 "use client";
+
 import { motion } from "framer-motion";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
+import { Stock } from "@/types";
 
-type Stock = {
-  symbol: string;
-  name: string;
-  price: number;
-  changePct: number;
-  sentiment: "hot" | "watch" | "steady";
-};
+interface StockCardProps {
+  stock: Stock;
+}
 
-const sentimentColors: Record<Stock["sentiment"], string> = {
-  hot: "from-emerald-400/30 to-emerald-600/10",
-  watch: "from-amber-400/30 to-amber-600/10",
-  steady: "from-slate-400/30 to-slate-600/10",
-};
+export default function StockCard({ stock }: StockCardProps) {
+  // Safety check
+  if (!stock || !stock.symbol) {
+    return (
+      <motion.div
+        className="p-4 rounded-xl bg-black/40 backdrop-blur-sm opacity-50"
+        whileHover={{ scale: 1.03 }}
+      >
+        <p className="text-gray-500 text-sm">Loading...</p>
+      </motion.div>
+    );
+  }
 
-export default function StockCard({ stock }: { stock: Stock }) {
-  const isUp = stock.changePct >= 0;
-  const gradient = sentimentColors[stock.sentiment];
+  // Glow style selection
+  const glow =
+    stock.sentiment === "hot" || stock.sentiment === "buy"
+      ? "glow-hot"
+      : stock.sentiment === "watch" || stock.sentiment === "hold"
+      ? "glow-watch"
+      : stock.sentiment === "steady" || stock.sentiment === "sell"
+      ? "glow-steady"
+      : "glow-neutral";
+
+  // Chart data fallback
+  const chartData =
+    stock.sparkline && stock.sparkline.length > 1
+      ? stock.sparkline.map((v, i) => ({ i, v }))
+      : [
+          { i: 0, v: stock.price },
+          { i: 1, v: stock.price },
+        ];
 
   return (
     <motion.div
-      whileHover={{
-        scale: 1.03,
-        boxShadow: "0 0 30px rgba(0, 255, 180, 0.15)",
-      }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      className={`relative rounded-xl bg-gradient-to-br ${gradient} border border-white/10 p-4 flex flex-col gap-3 backdrop-blur-sm`}
+      className={`p-4 rounded-xl bg-black/40 backdrop-blur-sm ${glow}`}
+      whileHover={{ scale: 1.03 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs text-white/40">{stock.name}</p>
-          <p className="text-lg font-semibold">{stock.symbol}</p>
-        </div>
-        <span
-          className={`text-[0.6rem] px-2 py-1 rounded-full bg-white/10 text-white/70`}
-        >
-          {stock.sentiment === "hot"
-            ? "🔥 Hot"
-            : stock.sentiment === "watch"
-            ? "👀 Watch"
-            : "💤 Steady"}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <p className="text-xl font-semibold">${stock.price.toFixed(2)}</p>
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-lg font-semibold text-white">{stock.symbol}</h3>
         <p
           className={`text-sm ${
-            isUp ? "text-emerald-400" : "text-red-400"
-          } font-medium`}
+            stock.changePct >= 0 ? "text-green-400" : "text-red-400"
+          }`}
         >
-          {isUp ? "+" : ""}
-          {stock.changePct}%
+          {stock.changePct > 0 ? "+" : ""}
+          {stock.changePct.toFixed(2)}%
         </p>
       </div>
 
-      <p className="text-[0.65rem] text-white/30">
-        Demo data • live feed coming soon
-      </p>
+      <p className="text-gray-300 text-sm mb-2">${stock.price.toFixed(2)}</p>
+
+      <div className="h-10">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData}>
+            <Line
+              type="monotone"
+              dataKey="v"
+              stroke={stock.changePct >= 0 ? "#4ade80" : "#f87171"}
+              strokeWidth={2}
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </motion.div>
   );
 }

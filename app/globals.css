@@ -2,17 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes blob {
-  0%, 100% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(40px, -60px) scale(1.15); }
-  66% { transform: translate(-30px, 40px) scale(0.95); }
+/* === MicroTrade Global Theme === */
+html,
+body {
+  height: 100%;
+  background-color: #000;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  overflow-x: hidden;
 }
 
-.animate-blob { animation: blob 8s infinite; }
-.animation-delay-2000 { animation-delay: 2s; }
-.animation-delay-4000 { animation-delay: 4s; }html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+/* Base container look */
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: #4ade80; /* Tailwind green-400 */
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* === Card look & motion hints === */
+.card {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.03);
+}
+
+/* === Utility glows for fallback === */
+/* === Permanent glow classes === */
+.glow-hot {
+  box-shadow: 0 0 25px 4px rgba(0, 255, 0, 0.8);
+}
+.glow-watch {
+  box-shadow: 0 0 25px 4px rgba(255, 215, 0, 0.6);
+}
+.glow-steady {
+  box-shadow: 0 0 25px 4px rgba(255, 0, 0, 0.6);
+}
+.glow-neutral {
+  box-shadow: 0 0 25px 4px rgba(100, 100, 255, 0.4);
 }

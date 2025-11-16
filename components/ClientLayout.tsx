@@ -58,9 +58,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <BottomNav />
 
       {/* Floating Coach Button */}
-      <div className="fixed bottom-24 right-5 z-50">
-        <CoachButton onOpen={() => setShowCoach(true)} />
-      </div>
+      <div className="fixed bottom-[110px] right-5 z-[9999]">
+  <CoachButton onOpen={() => setShowCoach(true)} />
+</div>
+
 
       {/* AI Coach Modal */}
       <CoachModal open={showCoach} onClose={() => setShowCoach(false)} />

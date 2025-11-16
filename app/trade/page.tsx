@@ -243,17 +243,18 @@ export default function TradePage() {
       setShowConfirm(false);
       return;
     }
+addTrade({
+  symbol: upperSymbol,
+  quantity: shares,
+  price: executionPrice,
+  fee: FEE,
+  orderType,
+  type: tradeType,
+  timestamp: new Date().toLocaleString(),
+  status: "filled",
+  dollars: shares * executionPrice, // ✅ REQUIRED FIELD
+});
 
-    addTrade({
-      symbol: upperSymbol,
-      quantity: shares,
-      price: executionPrice,
-      fee: FEE,
-      orderType,
-      type: tradeType,
-      timestamp: new Date().toLocaleString(),
-      status: "filled",
-    });
 
     // Reset form
     setSymbol("");

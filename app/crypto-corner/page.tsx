@@ -5,7 +5,6 @@ import { LineChart, Line, ResponsiveContainer } from "recharts";
 import { useTrades } from "@/context/TradeContext";
 
 type TradeType = "buy" | "sell";
-
 type CryptoTab = "overview" | "watchlist" | "movers" | "news";
 
 interface CryptoAsset {
@@ -15,12 +14,14 @@ interface CryptoAsset {
   changePct: number;
   sparkline: number[];
   tags: string[];
-  category: string; // e.g. "Layer 1", "Meme", etc.
+  category: string;
 }
 
-const FEE = 0.1; // small flat fee for demo
+const FEE = 0.1;
 
-// Demo crypto data (local only, no real API)
+// ------------------------------
+// DEMO CRYPTO DATA
+// ------------------------------
 const demoCryptos: CryptoAsset[] = [
   {
     symbol: "BTC",
@@ -96,12 +97,18 @@ const demoCryptos: CryptoAsset[] = [
   },
 ];
 
-// Smart Entry Assistant for crypto (dollars-based)
-const SmartEntryAssistantCrypto: React.FC<{
+// ------------------------------
+// SMART ENTRY ASSISTANT
+// ------------------------------
+const SmartEntryAssistantCrypto = ({
+  symbol,
+  dollars,
+  tradeType,
+}: {
   symbol: string;
   dollars: number;
   tradeType: TradeType;
-}> = ({ symbol, dollars, tradeType }) => {
+}) => {
   if (!symbol || !dollars || dollars <= 0) return null;
 
   const sizeLabel =
@@ -120,96 +127,86 @@ const SmartEntryAssistantCrypto: React.FC<{
       : `You’re looking to SELL ${symbol}.`;
 
   return (
-    <div className="mt-3 rounded-2xl border border-white/15 bg-white/5 p-3 text-xs sm:text-sm text-gray-200">
+    <div className="mt-3 rounded-2xl border border-white/15 bg-white/5 p-3 text-xs text-gray-200">
       <div className="flex items-center justify-between mb-1">
         <p className="font-semibold text-white">Smart Entry Assistant — Crypto</p>
         <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-300">
           Beta • Educational Only
         </span>
       </div>
-
       <p className="mb-1">
-        {directionText} A trade of{" "}
-        <span className="font-semibold">${dollars.toFixed(2)}</span> is considered{" "}
-        <span className="font-semibold">{sizeLabel}</span> for this corner.
+        {directionText} A trade of <strong>${dollars.toFixed(2)}</strong> is considered{" "}
+        <strong>{sizeLabel}</strong>.
       </p>
-
       <p className="mb-1">{riskHint}</p>
-
       <p className="text-[11px] text-gray-400 mt-2 border-t border-white/10 pt-2">
-        Disclaimer: This is for learning and planning only. It does not account for your
-        full risk profile or real-time liquidity.
+        Disclaimer: This is for learning and planning only.
       </p>
     </div>
   );
 };
 
+// ------------------------------
+// MAIN CRYPTO CORNER PAGE
+// ------------------------------
 export default function CryptoCornerPage() {
   const { addTrade } = useTrades();
 
   const [activeTab, setActiveTab] = useState<CryptoTab>("overview");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Crypto watchlist (symbols) with persistence
   const [watchlist, setWatchlist] = useState<string[]>([]);
-
-  // Quick trade state
-  const [selectedSymbol, setSelectedSymbol] = useState<string>("BTC");
+  const [selectedSymbol, setSelectedSymbol] = useState("BTC");
   const [tradeType, setTradeType] = useState<TradeType>("buy");
-  const [amountDollars, setAmountDollars] = useState<string>("25");
+  const [amountDollars, setAmountDollars] = useState("25");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [showConfirm, setShowConfirm] = useState(false);
-
-  // Modal selected asset (for details view)
   const [selectedAsset, setSelectedAsset] = useState<CryptoAsset | null>(null);
 
-  // Load / save watchlist from localStorage
+  // Persist watchlist
   useEffect(() => {
-    const saved = typeof window !== "undefined"
-      ? localStorage.getItem("microtrade_crypto_watchlist")
-      : null;
+    const saved = localStorage.getItem("microtrade_crypto_watchlist");
     if (saved) {
       try {
         setWatchlist(JSON.parse(saved));
-      } catch {
-        // ignore corrupted data
-      }
+      } catch {}
     }
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     localStorage.setItem("microtrade_crypto_watchlist", JSON.stringify(watchlist));
   }, [watchlist]);
 
-  const allAssets = useMemo(() => demoCryptos, []);
+  const allAssets = demoCryptos;
 
-  const currentAsset = useMemo(
-    () => allAssets.find((c) => c.symbol === selectedSymbol) ?? allAssets[0],
-    [allAssets, selectedSymbol]
-  );
+  const currentAsset =
+    allAssets.find((c) => c.symbol === selectedSymbol) ?? allAssets[0];
 
   const amountNumber = parseFloat(amountDollars || "0");
-  const effectivePrice = currentAsset?.price ?? 0;
+  const effectivePrice = currentAsset.price;
   const quantity =
-    effectivePrice > 0 && amountNumber > 0 ? amountNumber / effectivePrice : 0;
+    effectivePrice > 0 ? amountNumber / effectivePrice : 0;
   const tradeDollars = amountNumber > 0 ? amountNumber : 0;
-  const previewTotal = tradeDollars > 0 ? tradeDollars + FEE : 0;
+  const previewTotal = tradeDollars + FEE;
 
-  // Filter assets for grid based on tab + search
+  const toggleWatchlist = (symbol: string) => {
+    setWatchlist((prev) =>
+      prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]
+    );
+  };
+
   const filteredAssets = useMemo(() => {
     let list = [...allAssets];
 
-    // Tab filters
     if (activeTab === "watchlist") {
       list = list.filter((c) => watchlist.includes(c.symbol));
     } else if (activeTab === "movers") {
       list = list.sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct));
     }
 
-    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
@@ -221,65 +218,37 @@ export default function CryptoCornerPage() {
     }
 
     return list;
-  }, [allAssets, activeTab, watchlist, searchQuery]);
+  }, [activeTab, watchlist, searchQuery]);
 
-  const toggleWatchlist = (symbol: string) => {
-    setWatchlist((prev) =>
-      prev.includes(symbol) ? prev.filter((s) => s !== symbol) : [...prev, symbol]
-    );
-  };
-
-  // Sparkline component
   const Sparkline = ({ data }: { data: number[] }) => {
-    if (!data || !data.length) return null;
     const points = data.map((v, idx) => ({ idx, value: v }));
     return (
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={points}>
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke="#f97316" // orange by default (BTC-ish)
-            strokeWidth={2}
-            dot={false}
-            isAnimationActive={false}
-          />
+          <Line type="monotone" dataKey="value" stroke="#f97316" strokeWidth={2} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     );
   };
 
-  // Quick Trade: open confirm
   const handleOpenConfirm = () => {
     setError("");
-    if (!selectedSymbol) {
-      setError("Choose a crypto to trade.");
-      return;
-    }
-    if (!amountDollars || amountNumber <= 0) {
-      setError("Enter a valid dollar amount.");
-      return;
-    }
-    if (!effectivePrice || effectivePrice <= 0) {
-      setError("Price unavailable. Try another asset or refresh.");
-      return;
-    }
+    if (!selectedSymbol) return setError("Choose a crypto to trade.");
+    if (amountNumber <= 0) return setError("Enter a valid dollar amount.");
 
     setShowConfirm(true);
   };
 
-  // Quick Trade: confirm trade
   const handleConfirmTrade = () => {
-    if (!currentAsset || quantity <= 0 || tradeDollars <= 0) {
+    if (!currentAsset || quantity <= 0) {
       setShowConfirm(false);
       return;
     }
 
     setLoading(true);
-
     try {
       addTrade({
-        symbol: currentAsset.symbol + "-USD", // mark it as crypto pair
+        symbol: currentAsset.symbol + "-USD",
         quantity,
         dollars: tradeDollars,
         price: effectivePrice,
@@ -290,16 +259,14 @@ export default function CryptoCornerPage() {
         status: "filled",
       });
 
-      // Reset a bit (but keep last symbol)
       setAmountDollars("25");
-      setShowConfirm(false);
       setError("");
+      setShowConfirm(false);
     } finally {
       setLoading(false);
     }
   };
 
-  // Simple demo news
   const demoNews = [
     {
       id: 1,
@@ -321,72 +288,69 @@ export default function CryptoCornerPage() {
     },
   ];
 
-  // Tab config
-  const tabs: { id: CryptoTab; label: string }[] = [
+  const tabs = [
     { id: "overview", label: "Overview" },
     { id: "watchlist", label: "Watchlist" },
     { id: "movers", label: "Movers" },
     { id: "news", label: "News" },
-  ];
+  ] as const;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-[#050814] to-blue-600 text-white p-4">
       <section className="max-w-6xl mx-auto space-y-4">
+
         {/* HEADER */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Crypto Corner</h1>
             <p className="text-sm text-gray-300">
-              Everything crypto — micro-sized trades, watchlists, and clean signals for
-              the noisy market.
+              Everything crypto — micro trades, watchlists, and clean signals.
             </p>
           </div>
 
-          {/* Search */}
-          <div className="mt-2 sm:mt-0 w-full sm:w-64">
+          <div className="mt-2 sm:mt-0 w-full sm:w-72">
             <label className="text-xs text-gray-400">Search coins or categories</label>
             <input
-              type="text"
-              placeholder="BTC, ETH, L1, meme…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/10 text-white rounded-xl p-2.5 border border-white/20 mt-1 focus:border-blue-400 focus:outline-none text-sm"
+              placeholder="BTC, ETH, L1, meme…"
+              className="w-full bg-white/10 text-white rounded-xl p-2.5 border border-white/20 mt-1 text-sm"
             />
           </div>
         </div>
 
         {/* TABS */}
-        <div className="bg-black/40 backdrop-blur-xl border border-white/10 px-3 py-2 rounded-2xl flex gap-3 overflow-x-auto whitespace-nowrap">
-          {tabs.map((tab) => (
+        <div className="bg-black/40 border border-white/10 px-3 py-2 rounded-2xl flex gap-3 overflow-x-auto">
+          {tabs.map((t) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition border ${
-                activeTab === tab.id
-                  ? "bg-blue-600 border-blue-300 text-white shadow-[0_0_15px_rgba(59,130,246,0.7)]"
-                  : "bg-white/5 border-white/10 text-gray-300 hover:text-white"
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                activeTab === t.id
+                  ? "bg-blue-600 border-blue-300 text-white shadow"
+                  : "bg-white/5 border-white/10 text-gray-300"
               }`}
             >
-              {tab.label}
+              {t.label}
             </button>
           ))}
         </div>
 
-        {/* CONTENT GRID */}
-        <div className="grid gap-4 lg:grid-cols-[2.1fr,1.2fr]">
-          {/* LEFT: CARDS / NEWS */}
+        <div className="grid gap-4 lg:grid-cols-[2fr,1.25fr]">
+
+          {/* LEFT SIDE GRID */}
           <div className="space-y-4">
-            {/* Main block: depends on tab (except news handled separately) */}
-            {activeTab !== "news" && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-3 sm:p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="text-sm sm:text-base font-semibold">
+            {activeTab !== "news" ? (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold">
                     {activeTab === "overview" && "Top Crypto Watchlist"}
                     {activeTab === "watchlist" && "Your Crypto Watchlist"}
                     {activeTab === "movers" && "Biggest Movers"}
                   </h2>
                   <p className="text-[11px] text-gray-500">
-                    Tap a card for details • Toggle 👁 to watch.
+                    Tap a card • Toggle watchlist
                   </p>
                 </div>
 
@@ -396,7 +360,6 @@ export default function CryptoCornerPage() {
                       const isWatch = watchlist.includes(asset.symbol);
                       const isUp = asset.changePct >= 0;
 
-                      // simple mixed-color accent based on symbol
                       const accent =
                         asset.symbol === "BTC"
                           ? "from-orange-500 to-yellow-400"
@@ -412,38 +375,39 @@ export default function CryptoCornerPage() {
                         <button
                           key={asset.symbol}
                           onClick={() => setSelectedAsset(asset)}
-                          className="text-left bg-black/40 border border-white/10 rounded-2xl p-3 hover:border-blue-400/70 hover:shadow-[0_0_20px_rgba(37,99,235,0.5)] transition flex flex-col gap-2"
+                          className="text-left bg-black/40 border border-white/10 rounded-2xl p-3 hover:border-blue-400/70 hover:shadow transition flex flex-col gap-2"
                         >
-                          {/* Top row */}
+                          {/* ROW 1 */}
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <p className="text-sm font-semibold flex items-center gap-1">
-                                <span>{asset.symbol}</span>
+                                {asset.symbol}
                                 <span
                                   className={`inline-block w-1.5 h-1.5 rounded-full bg-gradient-to-r ${accent}`}
-                                />
+                                ></span>
                               </p>
-                              <p className="text-[11px] text-gray-400">
-                                {asset.name}
-                              </p>
+                              <p className="text-[11px] text-gray-400">{asset.name}</p>
                             </div>
-                            <button
-                              type="button"
+
+                            {/* FIXED WATCHLIST BUTTON (no nested <button>) */}
+                            <div
+                              role="button"
+                              tabIndex={0}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleWatchlist(asset.symbol);
                               }}
-                              className={`text-[11px] px-2 py-0.5 rounded-full border ${
+                              className={`cursor-pointer text-[11px] px-2 py-0.5 rounded-full border ${
                                 isWatch
                                   ? "border-emerald-400 bg-emerald-500/20 text-emerald-100"
                                   : "border-white/15 bg-white/5 text-gray-200 hover:bg-white/10"
                               }`}
                             >
                               {isWatch ? "👁 Watching" : "＋ Watch"}
-                            </button>
+                            </div>
                           </div>
 
-                          {/* Price row */}
+                          {/* ROW 2 */}
                           <div className="flex items-end justify-between">
                             <div>
                               <p className="text-lg font-bold">
@@ -460,7 +424,7 @@ export default function CryptoCornerPage() {
                             </div>
                             <div className="text-right text-[11px] text-gray-400">
                               <p>{asset.category}</p>
-                              <p>MicroTrade demo data</p>
+                              <p>MicroTrade demo</p>
                             </div>
                           </div>
 
@@ -471,12 +435,12 @@ export default function CryptoCornerPage() {
 
                           {/* Tags */}
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {asset.tags.slice(0, 3).map((tag) => (
+                            {asset.tags.slice(0, 3).map((t) => (
                               <span
-                                key={tag}
+                                key={t}
                                 className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-gray-200 border border-white/10"
                               >
-                                #{tag}
+                                #{t}
                               </span>
                             ))}
                           </div>
@@ -485,87 +449,66 @@ export default function CryptoCornerPage() {
                     })}
                   </div>
                 ) : (
-                  <div className="py-10 text-center text-sm text-gray-400">
-                    <p>No coins match this view yet.</p>
-                    <p className="text-[11px] mt-1">
-                      Try a different tab, search, or add items to your watchlist.
-                    </p>
-                  </div>
+                  <p className="text-center text-sm text-gray-400 py-10">
+                    No coins match this view yet.
+                  </p>
                 )}
               </div>
-            )}
-
-            {/* NEWS TAB CONTENT */}
-            {activeTab === "news" && (
+            ) : (
               <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-semibold">Crypto Corner News (Demo)</h2>
-                    <p className="text-xs text-gray-400">
-                      Headlines are for educational layout only — not live feeds.
-                    </p>
+                    <p className="text-xs text-gray-400">Educational layout</p>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-100 border border-blue-400/40">
-                    Coming soon: live feed
+                    Live feed soon
                   </span>
                 </div>
 
                 {demoNews.map((n) => (
                   <div
                     key={n.id}
-                    className="bg-black/40 border border-white/10 rounded-xl p-3 flex flex-col gap-1"
+                    className="bg-black/40 border border-white/10 rounded-xl p-3"
                   >
                     <p className="text-sm font-semibold">{n.title}</p>
-                    <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center justify-between text-[11px] mt-1">
                       <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-gray-200">
                         #{n.tag}
                       </span>
-                      <span className="text-gray-400">
-                        Tone:{" "}
-                        <span className="capitalize text-gray-200">
-                          {n.tone}
-                        </span>
-                      </span>
+                      <span className="text-gray-400">Tone: {n.tone}</span>
                     </div>
                   </div>
                 ))}
-
-                <p className="text-[11px] text-gray-500 border-t border-white/10 pt-2">
-                  In a future version, this section can plug into a real crypto news API.
-                  For now, it showcases how MicroTrade could present curated headlines.
-                </p>
               </div>
             )}
           </div>
 
-          {/* RIGHT: QUICK TRADE + SNAPSHOT */}
+          {/* RIGHT SIDEBAR */}
           <div className="space-y-4">
-            {/* QUICK TRADE */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3 shadow-[0_0_20px_rgba(0,0,0,0.25)]">
-              <h2 className="text-lg font-semibold">Quick Crypto Trade</h2>
-              <p className="text-xs text-gray-400 mb-1">
-                Micro-size a position in your favorite coin. Orders are simulated.
-              </p>
 
-              {/* Symbol + Price */}
+            {/* QUICK TRADE */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+              <h2 className="text-lg font-semibold">Quick Crypto Trade</h2>
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1">
                   <label className="text-xs text-gray-400">Crypto</label>
                   <select
                     value={selectedSymbol}
                     onChange={(e) => setSelectedSymbol(e.target.value)}
-                    className="w-full bg-white/10 text-white rounded-xl p-2.5 border border-white/20 mt-1 focus:border-blue-400 focus:outline-none text-sm"
+                    className="w-full bg-white/10 text-white rounded-xl p-2.5 border border-white/20 mt-1 text-sm"
                   >
-                    {allAssets.map((asset) => (
-                      <option key={asset.symbol} value={asset.symbol}>
-                        {asset.symbol} — {asset.name}
+                    {allAssets.map((a) => (
+                      <option key={a.symbol} value={a.symbol}>
+                        {a.symbol} — {a.name}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div className="flex-1 flex flex-col justify-center rounded-xl bg-white/5 border border-white/10 px-3 py-2">
-                  <p className="text-xs text-gray-400">Live demo price</p>
+                <div className="flex-1 bg-white/5 border border-white/10 rounded-xl p-2">
+                  <p className="text-xs text-gray-400">Price</p>
                   <p className="text-lg font-semibold">
                     ${currentAsset.price.toLocaleString()}
                   </p>
@@ -580,59 +523,48 @@ export default function CryptoCornerPage() {
                 </div>
               </div>
 
-              {/* Amount input */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-1">
-                  <label className="text-xs text-gray-400">Amount (USD)</label>
-                  <input
-                    type="number"
-                    step="1"
-                    placeholder="25"
-                    value={amountDollars}
-                    onChange={(e) => setAmountDollars(e.target.value)}
-                    className="w-full bg-white/10 text-white rounded-xl p-3 border border-white/20 mt-1 focus:border-blue-400 focus:outline-none"
-                  />
-                  <p className="text-[11px] text-gray-500 mt-1">
-                    Great for micro-sizing — $5, $10, $25 test positions.
-                  </p>
-                </div>
-
-                <div className="flex-1 flex flex-col justify-center rounded-xl bg-white/5 border border-white/10 px-3 py-2">
-                  <p className="text-xs text-gray-400">Est. size (coins)</p>
-                  <p className="text-lg font-semibold">
-                    {quantity > 0 ? quantity.toFixed(6) : "—"}
-                  </p>
-                  <p className="text-[11px] text-gray-500">
-                    Based on current demo price.
-                  </p>
-                </div>
+              <div>
+                <label className="text-xs text-gray-400">Amount (USD)</label>
+                <input
+                  type="number"
+                  value={amountDollars}
+                  onChange={(e) => setAmountDollars(e.target.value)}
+                  className="w-full bg-white/10 text-white rounded-xl p-3 border border-white/20 mt-1"
+                />
+                <p className="text-[11px] text-gray-500 mt-1">
+                  Great for micro-sizing — $5, $10, $25 positions.
+                </p>
               </div>
 
-              {/* Smart Entry Assistant */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-2">
+                <p className="text-xs text-gray-400">Est. size</p>
+                <p className="text-lg font-semibold">
+                  {quantity > 0 ? quantity.toFixed(6) : "—"}
+                </p>
+              </div>
+
               <SmartEntryAssistantCrypto
                 symbol={currentAsset.symbol}
                 dollars={tradeDollars}
                 tradeType={tradeType}
               />
 
-              {/* Buy / Sell */}
-              <div className="flex gap-3 mt-2">
+              <div className="flex gap-3">
                 <button
                   onClick={() => setTradeType("buy")}
                   className={`flex-1 py-2 rounded-xl border ${
                     tradeType === "buy"
-                      ? "bg-green-500/30 border-green-400"
+                      ? "bg-green-500/30 border-green-300"
                       : "bg-white/10 border-white/20"
                   }`}
                 >
                   Buy
                 </button>
-
                 <button
                   onClick={() => setTradeType("sell")}
                   className={`flex-1 py-2 rounded-xl border ${
                     tradeType === "sell"
-                      ? "bg-red-500/30 border-red-400"
+                      ? "bg-red-500/30 border-red-300"
                       : "bg-white/10 border-white/20"
                   }`}
                 >
@@ -640,32 +572,24 @@ export default function CryptoCornerPage() {
                 </button>
               </div>
 
-              {/* Review + error */}
-              <div className="flex items-center justify-between mt-3">
+              <div className="flex justify-between items-center">
                 <p className="text-[11px] text-gray-500">
-                  Educational only • Orders stay inside MicroTrade.
+                  Educational only — no real execution.
                 </p>
                 <button
                   onClick={handleOpenConfirm}
-                  disabled={loading}
-                  className="px-5 py-2 rounded-xl font-semibold transition disabled:opacity-40 bg-blue-600 hover:bg-blue-500 text-sm"
+                  className="px-5 py-2 rounded-xl bg-blue-600 text-white text-sm"
                 >
-                  {loading ? "Preparing..." : "Review Order"}
+                  Review Order
                 </button>
               </div>
 
-              {error && (
-                <p className="text-red-400 font-medium text-sm mt-2">{error}</p>
-              )}
+              {error && <p className="text-red-400 text-sm">{error}</p>}
             </div>
 
-            {/* Sidebar snapshot */}
+            {/* SNAPSHOT */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
               <h2 className="text-lg font-semibold">Crypto Snapshot</h2>
-              <p className="text-xs text-gray-400">
-                A quick vibe-check on the demo basket in this corner.
-              </p>
-
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="bg-black/40 border border-white/10 rounded-xl p-2">
                   <p className="text-[11px] text-gray-400">Coins watched</p>
@@ -674,47 +598,34 @@ export default function CryptoCornerPage() {
                   </p>
                 </div>
                 <div className="bg-black/40 border border-white/10 rounded-xl p-2">
-                  <p className="text-[11px] text-gray-400">Up vs Down</p>
+                  <p className="text-[11px] text-gray-400">Up / Down</p>
                   <p className="text-lg font-semibold">
-                    {
-                      allAssets.filter((c) => c.changePct >= 0)
-                        .length
-                    }{" "}
-                    ↑ /{" "}
-                    {
-                      allAssets.filter((c) => c.changePct < 0)
-                        .length
-                    }{" "}
-                    ↓
+                    {allAssets.filter((c) => c.changePct >= 0).length} ↑ /{" "}
+                    {allAssets.filter((c) => c.changePct < 0).length} ↓
                   </p>
                 </div>
               </div>
-
               <p className="text-[11px] text-gray-500 border-t border-white/10 pt-2">
-                Data on this screen is simulated to demo layout and behavior. When you’re
-                ready, this can be wired to a live crypto API for prices and news.
+                Demo data for layout and UX demonstration.
               </p>
             </div>
           </div>
         </div>
 
         {/* CONFIRMATION MODAL */}
-        {showConfirm && quantity > 0 && tradeDollars > 0 && (
+        {showConfirm && quantity > 0 && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60">
-            <div className="bg-[#050814] border border-white/20 rounded-2xl p-4 w-full max-w-md mx-4 mb-6 sm:mb-0 shadow-[0_0_25px_rgba(0,0,0,0.6)]">
+            <div className="bg-[#050814] border border-white/20 rounded-2xl p-4 w-full max-w-md mx-4 shadow">
               <h3 className="text-lg font-semibold mb-2">Confirm Crypto Order</h3>
               <p className="text-sm text-gray-300 mb-3">
-                {tradeType.toUpperCase()} {quantity.toFixed(6)}{" "}
-                {currentAsset.symbol}-USD for ${tradeDollars.toFixed(2)} as a Market
-                order (simulated).
+                {tradeType.toUpperCase()} {quantity.toFixed(6)} {currentAsset.symbol}-USD
+                for ${tradeDollars.toFixed(2)}
               </p>
 
-              <div className="bg-white/5 rounded-xl p-3 border border-white/10 mb-3 text-sm space-y-1">
+              <div className="bg-white/5 rounded-xl p-3 border border-white/10 text-sm space-y-1 mb-3">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Side</span>
-                  <span className="font-semibold">
-                    {tradeType === "buy" ? "Buy" : "Sell"}
-                  </span>
+                  <span className="font-semibold">{tradeType}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Price</span>
@@ -730,37 +641,28 @@ export default function CryptoCornerPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Notional</span>
-                  <span className="font-semibold">
-                    ${tradeDollars.toFixed(2)}
-                  </span>
+                  <span className="font-semibold">${tradeDollars.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Fee</span>
                   <span className="font-semibold">${FEE.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Estimated total</span>
-                  <span className="font-semibold">
-                    ${previewTotal.toFixed(2)}
-                  </span>
+                  <span className="text-gray-400">Total</span>
+                  <span className="font-semibold">${previewTotal.toFixed(2)}</span>
                 </div>
               </div>
-
-              <p className="text-[11px] text-gray-500 mb-3">
-                Orders here are simulated within MicroTrade 5.0 — nothing is routed to a
-                real exchange or wallet.
-              </p>
 
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => setShowConfirm(false)}
-                  className="px-4 py-2 rounded-xl border border-white/20 text-sm"
+                  className="px-4 py-2 rounded-xl border border-white/20"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirmTrade}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-semibold"
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white"
                 >
                   Confirm
                 </button>
@@ -769,29 +671,27 @@ export default function CryptoCornerPage() {
           </div>
         )}
 
-        {/* ASSET DETAILS MODAL */}
+        {/* ASSET DETAILS */}
         {selectedAsset && (
           <div
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70"
             onClick={() => setSelectedAsset(null)}
           >
             <div
-              className="bg-[#050814] border border-white/20 rounded-2xl p-4 sm:p-5 w-full max-w-lg mx-3 mb-6 sm:mb-0 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
+              className="bg-[#050814] border border-white/20 rounded-2xl p-5 w-full max-w-lg mx-3 shadow"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-start justify-between mb-3">
                 <div>
                   <p className="text-xs text-gray-400">Crypto Snapshot</p>
                   <h3 className="text-xl font-bold">
-                    {selectedAsset.symbol}{" "}
-                    <span className="text-sm text-gray-300">
-                      • {selectedAsset.name}
-                    </span>
+                    {selectedAsset.symbol}
+                    <span className="text-sm text-gray-300"> • {selectedAsset.name}</span>
                   </h3>
                 </div>
                 <button
                   onClick={() => setSelectedAsset(null)}
-                  className="text-xs px-2 py-1 rounded-full bg-white/10 border border-white/20 hover:bg-white/20"
+                  className="text-xs px-2 py-1 rounded-full bg-white/10 border border-white/20"
                 >
                   Close
                 </button>
@@ -804,16 +704,14 @@ export default function CryptoCornerPage() {
                   </p>
                   <p
                     className={`text-xs ${
-                      selectedAsset.changePct >= 0
-                        ? "text-green-400"
-                        : "text-red-400"
+                      selectedAsset.changePct >= 0 ? "text-green-400" : "text-red-400"
                     }`}
                   >
                     {selectedAsset.changePct >= 0 ? "+" : ""}
                     {selectedAsset.changePct.toFixed(2)}% today
                   </p>
                 </div>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 border border-white/15 text-gray-200">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 border border-white/15">
                   {selectedAsset.category}
                 </span>
               </div>
@@ -826,63 +724,32 @@ export default function CryptoCornerPage() {
                       value: v,
                     }))}
                   >
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      stroke="#f97316"
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={false}
-                    />
+                    <Line type="monotone" dataKey="value" stroke="#f97316" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="mb-3">
-                <p className="text-xs font-semibold text-blue-200 mb-1">
-                  MicroTrade Research Note (Crypto Demo)
-                </p>
-                <p className="text-xs text-gray-200 leading-relaxed">
-                  {selectedAsset.symbol} lives in the{" "}
-                  <span className="font-semibold">{selectedAsset.category}</span>{" "}
-                  corner of the crypto market. At around{" "}
-                  <span className="font-semibold">
-                    ${selectedAsset.price.toLocaleString()}
-                  </span>
-                  , it has shown a{" "}
-                  <span className="font-semibold">
-                    {selectedAsset.changePct >= 0 ? "positive" : "choppy"}
-                  </span>{" "}
-                  move of{" "}
-                  <span className="font-semibold">
-                    {selectedAsset.changePct.toFixed(2)}%
-                  </span>{" "}
-                  on the day. The tags{" "}
-                  {selectedAsset.tags.slice(0, 3).join(", ")}{" "}
-                  highlight why traders keep an eye on it.
-                  <br />
-                  <br />
-                  Use this as a starting point to explore micro positions instead of
-                  oversized bets. Remember: this is{" "}
-                  <span className="font-semibold">not financial advice</span> and is
-                  simulated inside MicroTrade 5.0.
-                </p>
-              </div>
+              <p className="text-xs text-gray-200 mb-3">
+                {selectedAsset.symbol} lives in the{" "}
+                <strong>{selectedAsset.category}</strong> corner of crypto. It currently trades at{" "}
+                <strong>${selectedAsset.price.toLocaleString()}</strong> with a{" "}
+                <strong>{selectedAsset.changePct.toFixed(2)}%</strong>{" "}
+                {selectedAsset.changePct >= 0 ? "gain" : "loss"} today.
+              </p>
 
-              <div className="flex flex-wrap gap-1 mb-3">
+              <div className="flex flex-wrap gap-1">
                 {selectedAsset.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-gray-200 border border-white/15"
+                    className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/15"
                   >
                     #{tag}
                   </span>
                 ))}
               </div>
 
-              <p className="text-[11px] text-gray-500 border-t border-white/10 pt-2">
-                Crypto Corner runs on demo data for now. Prices, news, and notes are
-                illustrative only and are not live market feeds.
+              <p className="text-[11px] text-gray-500 border-t border-white/10 pt-2 mt-3">
+                Educational only — no live market data.
               </p>
             </div>
           </div>

@@ -9,6 +9,9 @@ const tabs = [
   { name: "Research", href: "/research" },
   { name: "History", href: "/history" },
   { name: "Learn", href: "/learn" },
+
+  // ⭐ NEW TAB: Crypto Corner
+  { name: "Crypto", href: "/crypto-corner" },
 ];
 
 export default function BottomNav() {
@@ -33,3 +36,4 @@ export default function BottomNav() {
     </nav>
   );
 }
+

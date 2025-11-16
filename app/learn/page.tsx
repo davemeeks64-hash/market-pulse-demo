@@ -446,13 +446,11 @@ export default function LearnPage() {
             )}
           </div>
         </div>
-      </section>
-
-      {/* Coach Modal */}
-      <CoachModal show={showCoach} onClose={() => setShowCoach(false)} />
-
-      {/* Badge Popup */}
-      <BadgePopup badge={showPopup} onClose={() => setShowPopup(null)} />
+                 </section>
     </main>
+
+  
   );
 }
+
+

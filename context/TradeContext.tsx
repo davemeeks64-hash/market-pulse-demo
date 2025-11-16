@@ -1,77 +1,59 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
-export type TradeType = "buy" | "sell";
-
-export interface Trade {
+export type Trade = {
   id: string;
   symbol: string;
-  quantity: number;   // shares or coins
-  dollars: number;    // notional
+  quantity: number;
+  dollars: number;
   price: number;
   fee: number;
-  orderType: string;
-  type: TradeType;
+  orderType: "market" | "limit" | "stop" | "takeprofit";
+  type: "buy" | "sell";
   timestamp: string;
   status: string;
-}
+};
 
-interface TradeContextType {
+export type TradeContextType = {
   trades: Trade[];
   addTrade: (trade: Omit<Trade, "id">) => void;
-}
+  clearTrades: () => void;   // <-- ✅ FIX: Add this
+};
 
 const TradeContext = createContext<TradeContextType | undefined>(undefined);
 
-const STORAGE_KEY = "microtrade_trades_v1";
-
-export const TradeProvider = ({ children }: { children: React.ReactNode }) => {
+export const TradeProvider = ({ children }: { children: ReactNode }) => {
   const [trades, setTrades] = useState<Trade[]>([]);
 
-  // Load trades on startup
-  useEffect(() => {
-    try {
-      const raw = typeof window !== "undefined"
-        ? localStorage.getItem(STORAGE_KEY)
-        : null;
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        setTrades(parsed);
-      }
-    } catch {
-      // ignore corrupted localStorage
-    }
-  }, []);
-
-  // Save trades whenever they change
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trades));
-  }, [trades]);
-
   const addTrade = (trade: Omit<Trade, "id">) => {
+    const id = Math.random().toString(36).substring(2, 9);
+
     setTrades((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
         ...trade,
+        id,
       },
     ]);
   };
 
+  // ✅ FIX: Clear all trades
+  const clearTrades = () => {
+    setTrades([]);
+  };
+
   return (
-    <TradeContext.Provider value={{ trades, addTrade }}>
+    <TradeContext.Provider value={{ trades, addTrade, clearTrades }}>
       {children}
     </TradeContext.Provider>
   );
 };
 
 export const useTrades = () => {
-  const ctx = useContext(TradeContext);
-  if (!ctx) {
+  const context = useContext(TradeContext);
+  if (!context) {
     throw new Error("useTrades must be used within a TradeProvider");
   }
-  return ctx;
+  return context;
 };

@@ -280,30 +280,32 @@ export default function DashboardPage() {
   --------------------------------------------- */
 
   const handleConfirmTrade = () => {
-    if (!livePrice || shares <= 0 || !symbol) {
-      setShowConfirm(false);
-      return;
-    }
-
-    const upperSymbol = symbol.toUpperCase();
-
-    addTrade({
-      symbol: upperSymbol,
-      quantity: shares,
-      price: livePrice,
-      fee: FEE,
-      orderType,
-      type: tradeType,
-      timestamp: new Date().toLocaleString(),
-      status: "filled",
-    });
-
-    setSymbol("");
-    setSharesInput("");
-    setLimitPrice("");
-    setError("");
+  if (!livePrice || shares <= 0 || !symbol) {
     setShowConfirm(false);
-  };
+    return;
+  }
+
+  const upperSymbol = symbol.toUpperCase();
+
+  addTrade({
+  symbol: upperSymbol,
+  type: tradeType,
+  quantity: shares,
+  price: livePrice,
+  orderType,
+  fee: FEE,
+  status: "filled",
+  timestamp: new Date().toISOString(),
+  dollars: shares * livePrice,
+});
+
+
+  setSymbol("");
+  setSharesInput("");
+  setLimitPrice("");
+  setError("");
+  setShowConfirm(false);
+};
 
   /* ---------------------------------------------
      RENDER
@@ -756,12 +758,7 @@ export default function DashboardPage() {
         )}
       </section>
 
-      {/* Floating AI Coach Button & Modal */}
-      <div className="fixed bottom-20 right-5 z-50">
-        <CoachButton onOpen={() => setShowCoach(true)} />
-      </div>
-
-      <CoachModal open={showCoach} onClose={() => setShowCoach(false)} />
+      
     </main>
   );
 }

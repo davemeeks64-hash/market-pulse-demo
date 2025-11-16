@@ -1,33 +1,22 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import BottomNav from "@/components/BottomNav";
 import { TradeProvider } from "@/context/TradeContext";
+import { CoachProvider } from "@/context/CoachContext";
+import ClientLayout from "@/components/ClientLayout";
 
 export const metadata: Metadata = {
   title: "MicroTrade 5.0 — Noctive Edition",
-  description: "A modern micro-trading experience powered by AI.",
+  description: "Micro-sized trading for the modern retail investor.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className="
-          min-h-screen
-          bg-gradient-to-b
-          from-black
-          via-black
-          to-[#001b3d]
-          text-white
-          antialiased
-        "
-      >
+      <body className="bg-black text-white">
         <TradeProvider>
-          <main className="min-h-screen pb-24">
-            {children}
-          </main>
-
-          <BottomNav />
+          <CoachProvider>
+            <ClientLayout>{children}</ClientLayout>
+          </CoachProvider>
         </TradeProvider>
       </body>
     </html>

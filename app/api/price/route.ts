@@ -1,50 +1,62 @@
 import { NextResponse } from "next/server";
 
-const API_KEY = "KGJY3SPL0MCPEP3A";
-
 export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const symbol = searchParams.get("symbol");
+  const { searchParams } = new URL(request.url);
+  const symbol = searchParams.get("symbol")?.toUpperCase() || "AAPL";
 
-    if (!symbol) {
+  const API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+  if (!API_KEY) {
+    return NextResponse.json(
+      { error: "Missing AlphaVantage API key on server" },
+      { status: 500 }
+    );
+  }
+
+  try {
+    const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEY}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
       return NextResponse.json(
-        { error: "No symbol provided." }, 
+        { error: "Failed to fetch price data" },
+        { status: 500 }
+      );
+    }
+
+    const data = await response.json();
+
+    // AlphaVantage rate limit handler
+    if (data.Note) {
+      return NextResponse.json(
+        { error: "API rate limit reached. Try again shortly." },
+        { status: 429 }
+      );
+    }
+
+    const quote = data["Global Quote"];
+    if (!quote) {
+      return NextResponse.json(
+        { error: "Invalid symbol or no data available." },
         { status: 400 }
       );
     }
 
-    const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEY}`;
+    const price = parseFloat(quote["05. price"] || "0");
+    const change = parseFloat(quote["09. change"] || "0");
+    const changePercent = parseFloat(
+      (quote["10. change percent"] || "0%").replace("%", "")
+    );
 
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
-      cache: "no-store",
+    return NextResponse.json({
+      symbol,
+      price,
+      change,
+      changePercent,
     });
 
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: "Alpha Vantage request failed." },
-        { status: res.status }
-      );
-    }
-
-    const data = await res.json();
-    const price = Number(data?.["Global Quote"]?.["05. price"]);
-
-    if (!price) {
-      return NextResponse.json(
-        { error: "Symbol not found or no data returned." },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ price });
-  } catch (error) {
+  } catch (err) {
     return NextResponse.json(
-      { error: "Server Error fetching price." }, 
+      { error: "Server error. Please try again." },
       { status: 500 }
     );
   }
